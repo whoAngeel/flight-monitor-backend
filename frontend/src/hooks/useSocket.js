@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 
-export function useSocket(onMessage) {
+export function useSocket({ onFlightsUpdate, onStatsUpdate } = {}) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Conecta al backend
     const socket = io("http://localhost:8000", {
       transports: ["websocket"],
       reconnection: true,
@@ -27,16 +26,19 @@ export function useSocket(onMessage) {
       console.error("⚠️ Error de conexión WS:", err.message);
     });
 
-    // Listener personalizado (si lo necesitas)
-    if (onMessage) {
-      socket.on("message", onMessage);
+    // === Listeners personalizados ===
+    if (onFlightsUpdate) {
+      socket.on("flights_update", onFlightsUpdate);
     }
 
-    // Limpieza al desmontar
+    if (onStatsUpdate) {
+      socket.on("stats_update", onStatsUpdate);
+    }
+
     return () => {
       socket.disconnect();
     };
-  }, [onMessage]);
+  }, [onFlightsUpdate, onStatsUpdate]);
 
   return socketRef;
 }
