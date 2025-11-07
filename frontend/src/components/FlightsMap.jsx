@@ -1,14 +1,16 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { useState, useEffect, useRef } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
-import { useSocket } from "../hooks/useSocket";
+import { useEffect, useRef } from "react";
+import { useMotionValue, animate } from "framer-motion";
+import { useFlightData } from "../context/socketContext";
 
 const CDMX_CENTER = { lat: 19.4326, lng: -99.1332 };
 
 const planeIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-  iconSize: [20, 20],
+  iconUrl:
+    "https://images.vexels.com/media/users/3/153005/isolated/preview/b3c3b1a530afa43f61cf4207c75cc6e0-icono-de-trazo-de-color-de-avion.png",
+
+  iconSize: [25, 25],
   iconAnchor: [10, 10],
   popupAnchor: [0, -10],
 });
@@ -19,7 +21,6 @@ function AnimatedMarker({ flight }) {
   const lng = useMotionValue(flight.longitude);
 
   useEffect(() => {
-    // Interpolación suave de latitud y longitud
     const controls = [
       animate(lat, flight.latitude, { duration: 2, ease: "easeInOut" }),
       animate(lng, flight.longitude, { duration: 2, ease: "easeInOut" }),
@@ -47,28 +48,61 @@ function AnimatedMarker({ flight }) {
   }, []);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={[lat.get(), lng.get()]}
-      icon={planeIcon}
-    >
+    <Marker ref={markerRef} position={[lat.get(), lng.get()]} icon={planeIcon}>
       <Popup>
-        <strong>{flight.callsign || "Sin ID"}</strong>
-        <div>{flight.origin_country || "Desconocido"}</div>
-        <div>Alt: {flight.altitude?.toFixed(0)} m</div>
-        <div>Vel: {(flight.velocity * 3.6).toFixed(0)} km/h</div>
+        <div className="text-sm space-y-1">
+          <div className="font-bold text-lg border-b pb-1 mb-2">
+            ✈️ {flight.callsign || "Sin ID"}
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-10 gap-y-1 text-sm">
+            <div className="text-gray-600">País:</div>
+            <div className="font-semibold">
+              {flight.origin_country || "Desconocido"}
+            </div>
+
+            <div className="text-gray-600">ICAO24:</div>
+            <div className="font-mono text-xs">{flight.icao24}</div>
+
+            <div className="text-gray-600">Altitud:</div>
+            <div className="font-semibold">{flight.altitude?.toFixed(0)} m</div>
+
+            <div className="text-gray-600">Velocidad:</div>
+            <div className="font-semibold">
+              {(flight.velocity * 3.6).toFixed(0)} km/h
+            </div>
+
+            <div className="text-gray-600">Rumbo:</div>
+            <div className="font-semibold">{flight.heading?.toFixed(1)}°</div>
+
+            <div className="text-gray-600">Vel. Vertical:</div>
+            <div className="font-semibold">
+              {flight.vertical_rate?.toFixed(2)} m/s
+              {flight.vertical_rate > 0
+                ? " ⬆️"
+                : flight.vertical_rate < 0
+                ? " ⬇️"
+                : " ➡️"}
+            </div>
+
+            <div className="text-gray-600">Estado:</div>
+            <div className="font-semibold">
+              {flight.on_ground ? "🛬 En tierra" : "🛫 En vuelo"}
+            </div>
+
+            <div className="text-gray-600">Último contacto:</div>
+            <div className="text-xs">
+              {new Date(flight.last_contact).toLocaleTimeString("es-MX")}
+            </div>
+          </div>
+        </div>
       </Popup>
     </Marker>
   );
 }
 
 export default function FlightsMap() {
-  const [flights, setFlights] = useState([]);
-  const { socket } = useSocket({
-    onFlightsUpdate: (data) => {
-      setFlights(data);
-    },
-  });
+  const { flights } = useFlightData();
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden bg-white">
@@ -78,9 +112,7 @@ export default function FlightsMap() {
         scrollWheelZoom={true}
         className="h-full w-full"
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
+        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
         {flights.map((f) => (
           <AnimatedMarker key={f.icao24} flight={f} />
         ))}

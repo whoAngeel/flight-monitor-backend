@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   XAxis,
   YAxis,
@@ -9,47 +8,18 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { useSocket } from "../hooks/useSocket";
+import { useFlightData } from "../context/socketContext";
 
 export default function FlightsChart() {
-  const [data, setData] = useState([]);
+  const { chartData } = useFlightData();
 
-  useSocket({
-    onStatsUpdate: (stats) => {
-      const timestamp = new Date().toLocaleTimeString("es-MX", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-
-      setData((prev) => {
-        const updated = [
-          ...prev,
-          {
-            time: timestamp,
-            active: stats.active_flights || 0,
-            avg_altitude: stats.avg_altitude || 0,
-            avg_speed: stats.avg_speed || 0,
-          },
-        ];
-        // Mantener los últimos 30 puntos para mejor visualización
-        return updated.slice(-30);
-      });
-    },
-  });
-
-  // Formatear tooltip personalizado
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="font-semibold text-gray-800 mb-2">{`Hora: ${label}`}</p>
           {payload.map((entry, index) => (
-            <p
-              key={index}
-              className="text-sm"
-              style={{ color: entry.color }}
-            >
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
               {`${entry.name}: ${entry.value?.toFixed(1)}`}
             </p>
           ))}
@@ -68,7 +38,7 @@ export default function FlightsChart() {
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
           >
             <defs>
@@ -137,7 +107,7 @@ export default function FlightsChart() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      {data.length === 0 && (
+      {chartData.length === 0 && (
         <div className="text-center py-4">
           <p className="text-gray-400 text-xs animate-pulse">
             Esperando datos...
@@ -147,4 +117,3 @@ export default function FlightsChart() {
     </div>
   );
 }
-

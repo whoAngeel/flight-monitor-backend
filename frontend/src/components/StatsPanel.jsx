@@ -18,7 +18,7 @@ export default function StatsPanel({ stats }) {
                     <div className="bg-gray-50 rounded p-2">
                         <p className="text-xs text-gray-600 mb-0.5">Velocidad promedio</p>
                         <p className="text-lg font-semibold text-blue-600">
-                            {stats.avg_speed?.toFixed(1) || "0.0"} km/h
+                            {stats.avg_velocity?.toFixed(1) || "0.0"} km/h
                         </p>
                     </div>
                     <div className="bg-gray-50 rounded p-2">
