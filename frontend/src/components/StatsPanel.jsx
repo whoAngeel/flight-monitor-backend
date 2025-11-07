@@ -29,7 +29,7 @@ export default function StatsPanel({ stats }) {
                     </div>
                     {stats.active_flights !== undefined && (
                         <div className="bg-gray-50 rounded p-2">
-                            <p className="text-xs text-gray-600 mb-0.5">Vuelos activos</p>
+                            <p className="text-xs text-gray-600 mb-0.5">Vuelos activos (ultimos 2 min)</p>
                             <p className="text-xl font-bold text-purple-600">
                                 {stats.active_flights}
                             </p>

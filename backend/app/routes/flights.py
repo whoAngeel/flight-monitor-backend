@@ -10,4 +10,4 @@ router = APIRouter()
 
 @router.get("/active", response_model=List[FlightResponse])
 async def get_active(db: AsyncSession = Depends(get_db)):
-    return await get_active_flights(db)
+    return await get_active_flights(db, minutes=2)

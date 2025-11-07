@@ -13,7 +13,7 @@ async def save_flights(db: AsyncSession, flights_data: List[dict]) -> int:
     return len(flights)
 
 async def get_active_flights(db: AsyncSession, minutes: int = 5) -> List[FlightResponse]:
-    cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+    cutoff = datetime.now() - timedelta(minutes=minutes)
     result = await db.execute(
         select(Flight).where(Flight.created_at >= cutoff).order_by(Flight.created_at.desc())
     )
@@ -21,14 +21,14 @@ async def get_active_flights(db: AsyncSession, minutes: int = 5) -> List[FlightR
 
 async def get_stats(db: AsyncSession) -> StatsResponse:
     # Total flights today
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     total_result = await db.execute(
         select(func.count(Flight.id)).where(Flight.created_at >= today)
     )
     total_flights = total_result.scalar()
     
     # Active flights (last 5 min)
-    cutoff = datetime.utcnow() - timedelta(minutes=5)
+    cutoff = datetime.now() - timedelta(minutes=2)
     active_result = await db.execute(
         select(func.count(Flight.id)).where(Flight.created_at >= cutoff)
     )
@@ -41,7 +41,7 @@ async def get_stats(db: AsyncSession) -> StatsResponse:
     unique_aircraft = unique_result.scalar()
     
     # Averages from last hour
-    hour_ago = datetime.utcnow() - timedelta(hours=1)
+    hour_ago = datetime.now() - timedelta(hours=1)
     avg_result = await db.execute(
         select(
             func.avg(Flight.altitude),
@@ -59,7 +59,7 @@ async def get_stats(db: AsyncSession) -> StatsResponse:
     )
 
 async def cleanup_old_flights(db: AsyncSession, hours: int = 2) -> int:
-    cutoff = datetime.utcnow() - timedelta(hours=hours)
+    cutoff = datetime.now() - timedelta(hours=hours)
     result = await db.execute(
         delete(Flight).where(Flight.created_at < cutoff)
     )
