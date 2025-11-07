@@ -48,8 +48,11 @@ services:
       - ZBX_SERVER_ACTIVE=corriditos.zabbix.cloud:10051
       - ZBX_PASSIVE_ALLOW=true
       - ZBX_ACTIVE_ALLOW=true
+      - ZBX_ENABLEREMOTECOMMANDS=1
+      - ZBX_ALLOWKEY=system.run[*]
     volumes:
       - ./zabbix/scripts:/usr/local/bin/custom_scripts:ro
+      - flight_backups:/backups
     depends_on:
       - backend
       - db
@@ -59,6 +62,7 @@ services:
 
 volumes:
   postgres_data:
+  flight_backups:
 
 networks:
   flight-monitor-network:
