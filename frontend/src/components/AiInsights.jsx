@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 
 export default function AiInsights() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
 
   const fetchInsights = async () => {
     setLoading(true);
@@ -19,38 +20,69 @@ export default function AiInsights() {
     }
   };
 
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    setPlaying(false);
+  };
+
   const playAudioFromText = async (text) => {
+    if (playing) {
+      stopAudio();
+      return;
+    }
+
     try {
       setPlaying(true);
       const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       const voiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
 
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_turbo_v2",
-          voice_settings: { stability: 0.5, similarity_boost: 0.8 },
-        }),
-      });
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            text,
+            model_id: "eleven_turbo_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.8 },
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Audio generation failed");
 
       const audioData = await response.arrayBuffer();
       const blob = new Blob([audioData], { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
+      
       const audio = new Audio(url);
-      audio.play();
+      audioRef.current = audio;
 
       audio.onended = () => {
         setPlaying(false);
         URL.revokeObjectURL(url);
+        audioRef.current = null;
       };
+
+      audio.onerror = () => {
+        console.error("Error playing audio");
+        setPlaying(false);
+        URL.revokeObjectURL(url);
+        audioRef.current = null;
+      };
+
+      await audio.play();
     } catch (error) {
       console.error("Error reproduciendo el audio:", error);
       setPlaying(false);
+      audioRef.current = null;
     }
   };
 
@@ -63,9 +95,16 @@ export default function AiInsights() {
         <button
           onClick={fetchInsights}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {loading ? "Analyzing..." : "Generate Insights"}
+          {loading ? (
+            <>
+              <span className="animate-spin inline-block mr-2">⚙️</span>
+              Analyzing...
+            </>
+          ) : (
+            "Generate Insights"
+          )}
         </button>
       </div>
 
@@ -78,10 +117,23 @@ export default function AiInsights() {
           <div className="flex gap-3">
             <button
               onClick={() => playAudioFromText(data.insights)}
-              disabled={playing}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              className={`px-4 py-2 text-white rounded transition-colors ${
+                playing
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
-              {playing ? "Reproduciendo..." : "🔊 Escuchar Insight"}
+              {playing ? (
+                <>
+                  <span className="inline-block mr-2">⏸️</span>
+                  Stop Audio
+                </>
+              ) : (
+                <>
+                  <span className="inline-block mr-2">🔊</span>
+                  Escuchar Insight
+                </>
+              )}
             </button>
           </div>
 
