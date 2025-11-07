@@ -4,10 +4,11 @@ import AiInsights from "../components/AiInsights";
 import TrafficPrediction from "../components/TrafficPrediction";
 import AiChat from "../components/AiChat";
 import DailyReport from "../components/DailyReport";
+import AlertsPanel from "../components/AlertsPanel";
 
 export default function Analytics() {
   return (
-      <div className="flex-1 p-4 overflow-auto">
+    <div className="flex-1 p-4 overflow-auto">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <CurrentStats />
