@@ -7,7 +7,7 @@ from app.database import get_db
 from app.services.flights import get_stats
 from app.services.gemini import gemini_service
 from app.schemas import StatsResponse
-from app.models import Flight
+from app.models import Flight, SystemEvent
 
 router = APIRouter()
 
@@ -104,9 +104,69 @@ async def get_daily_report(db: AsyncSession = Depends(get_db)):
     }
     
     report = await gemini_service.generate_report(daily_stats)
-    
+
     return {
         "report": report,
         "stats": daily_stats,
         "generated_at": datetime.utcnow().isoformat()
+    }
+
+@router.get("/events")
+async def get_system_events(
+    limit: int = Query(50, ge=1, le=200, description="Número de eventos a retornar"),
+    severity: str = Query(None, description="Filtrar por severidad: info, warning, error, critical"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Obtiene eventos del sistema registrados por Zabbix y otros componentes.
+    Útil para mostrar en el frontend un timeline de alertas y acciones.
+    """
+    query = select(SystemEvent).order_by(desc(SystemEvent.created_at)).limit(limit)
+
+    if severity:
+        query = query.where(SystemEvent.severity == severity)
+
+    result = await db.execute(query)
+    events = result.scalars().all()
+
+    return {
+        "events": [
+            {
+                "id": event.id,
+                "event_type": event.event_type,
+                "severity": event.severity,
+                "message": event.message,
+                "metadata": event.metadata_json,
+                "created_at": event.created_at.isoformat()
+            }
+            for event in events
+        ],
+        "total": len(events)
+    }
+
+@router.get("/events/summary")
+async def get_events_summary(
+    hours: int = Query(24, ge=1, le=168, description="Últimas N horas"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Resumen de eventos por severidad en las últimas N horas.
+    """
+    cutoff = datetime.utcnow() - timedelta(hours=hours)
+
+    result = await db.execute(
+        select(
+            SystemEvent.severity,
+            func.count(SystemEvent.id).label('count')
+        )
+        .where(SystemEvent.created_at >= cutoff)
+        .group_by(SystemEvent.severity)
+    )
+
+    summary = {row.severity: row.count for row in result.all()}
+
+    return {
+        "period_hours": hours,
+        "summary": summary,
+        "total_events": sum(summary.values())
     }
