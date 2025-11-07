@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS flights (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_flights_created_at ON flights(created_at DESC);
-CREATE INDEX idx_flights_icao24 ON flights(icao24);
-CREATE INDEX idx_flights_active ON flights(created_at) WHERE created_at > NOW() - INTERVAL '5 minutes';
+CREATE INDEX IF NOT EXISTS idx_flights_created_at ON flights(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_flights_icao24 ON flights(icao24);
+CREATE INDEX IF NOT EXISTS idx_flights_active ON flights(created_at) WHERE created_at > NOW() - INTERVAL '5 minutes';
 
 CREATE TABLE IF NOT EXISTS system_events (
     id SERIAL PRIMARY KEY,
@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS system_events (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_events_created_at ON system_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_created_at ON system_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_severity ON system_events(severity);
+CREATE INDEX IF NOT EXISTS idx_events_type ON system_events(event_type);
 
 CREATE MATERIALIZED VIEW flight_stats AS
 SELECT 
