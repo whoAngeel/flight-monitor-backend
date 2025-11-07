@@ -25,8 +25,10 @@ export default function AiChat() {
     setLoading(true);
 
     try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+
       const { data } = await axios.post(
-        `http://localhost:8000/api/stats/chat?question=${encodeURIComponent(
+        `${apiUrl}/api/stats/chat?question=${encodeURIComponent(
           question
         )}`
       );

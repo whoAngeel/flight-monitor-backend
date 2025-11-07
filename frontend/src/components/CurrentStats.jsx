@@ -8,7 +8,8 @@ export default function CurrentStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await axios.get("http://localhost:8000/api/stats/current");
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const { data } = await axios.get(`${apiUrl}/api/stats/current`);
         setStats(data);
       } catch (error) {
         console.error("Error fetching stats:", error);

@@ -3,9 +3,10 @@ import { io } from "socket.io-client";
 
 export function useSocket({ onFlightsUpdate, onStatsUpdate } = {}) {
   const socketRef = useRef(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    const socket = io("http://localhost:8000", {
+    const socket = io(apiUrl, {
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,

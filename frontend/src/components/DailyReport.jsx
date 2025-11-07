@@ -9,8 +9,10 @@ export default function DailyReport() {
   const fetchReport = async () => {
     setLoading(true);
     try {
+      const apiUrl = import.meta.env.VITE_API_URL;
       const { data } = await axios.get(
-        "http://localhost:8000/api/stats/report/daily"
+        
+        `${apiUrl}/api/stats/report/daily`
       );
       setReport(data);
     } catch (error) {

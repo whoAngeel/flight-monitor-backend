@@ -8,7 +8,8 @@ export default function AiInsights() {
   const fetchInsights = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:8000/api/stats/insights");
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const { data } = await axios.get(`${apiUrl}/api/stats/insights`);
       setData(data);
     } catch (error) {
       console.error("Error fetching insights:", error);

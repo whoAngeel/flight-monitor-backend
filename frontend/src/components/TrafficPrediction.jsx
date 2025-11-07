@@ -8,7 +8,8 @@ export default function TrafficPrediction() {
   const fetchPrediction = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:8000/api/stats/predict");
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const { data } = await axios.get(`${apiUrl}/api/stats/predict`);
       setData(data);
     } catch (error) {
       console.error("Error fetching prediction:", error);
