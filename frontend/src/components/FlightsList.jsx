@@ -1,7 +1,9 @@
 import React from "react";
 import { FlightCard } from "./FlightCard";
 
-export default function FlightsList({ flights }) {
+
+
+export default function FlightsList({ flights, onSelectFlight }) {
   return (
     <div className="bg-white p-3 rounded-lg border border-gray-200 h-full flex flex-col min-h-0">
       <h3 className="text-sm font-semibold mb-2 text-gray-800 flex items-center gap-1.5">
@@ -13,20 +15,20 @@ export default function FlightsList({ flights }) {
           </span>
         )}
       </h3>
+
       {flights.length > 0 ? (
-        // --- CAMBIO PRINCIPAL AQUÍ ---
-        // 1. Eliminamos 'space-y-1.5'
-        // 2. Añadimos 'grid', 'gap-2' (para espaciado)
-        // 3. Añadimos 'grid-cols-1' (móvil) y 'sm:grid-cols-2' (escritorio)
         <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 pr-1">
           {flights.map((flight, i) => (
-            // Usamos el nuevo componente FlightCard
-            <FlightCard key={flight.icao24 || i} flight={flight} />
+            <div
+              key={flight.icao24 || i}
+              onClick={() => onSelectFlight?.(flight)}
+              className="cursor-pointer hover:bg-blue-50 transition rounded-lg"
+            >
+              <FlightCard flight={flight} />
+            </div>
           ))}
         </div>
       ) : (
-        // --- FIN DEL CAMBIO ---
-
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-400 text-xs animate-pulse">
             Esperando vuelos...
