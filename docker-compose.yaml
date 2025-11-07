@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
+    container_name: flight-monitor-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,11 +16,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - flight-monitor-network
+    restart: unless-stopped
 
   backend:
     build: ./backend
+    container_name: flight-monitor-backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/air_traffic
     volumes:
@@ -27,25 +34,36 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - flight-monitor-network
     restart: unless-stopped
 
   zabbix-agent:
     image: zabbix/zabbix-agent2:alpine-latest
-    ports:
-      - "10050:10050"
+    container_name: flight-monitor-zabbix-agent
     environment:
-      - ZBX_HOSTNAME=air-traffic-backend
-      - ZBX_SERVER_HOST=elegant-eagle.zabbix.cloud
+      - ZBX_HOSTNAME=flight-monitor-backend
+      - ZBX_SERVER_HOST=corriditos.zabbix.cloud
       - ZBX_SERVER_PORT=10051
-      - ZBX_SERVER_ACTIVE=elegant-eagle.zabbix.cloud:10051
+      - ZBX_SERVER_ACTIVE=corriditos.zabbix.cloud:10051
+      - ZBX_PASSIVE_ALLOW=true
+      - ZBX_ACTIVE_ALLOW=true
+      - ZBX_ENABLEREMOTECOMMANDS=1
+      - ZBX_ALLOWKEY=system.run[*]
     volumes:
-      - ./zabbix/scripts:/usr/lib/zabbix/externalscripts
+      - ./zabbix/scripts:/usr/local/bin/custom_scripts:ro
+      - flight_backups:/backups
     depends_on:
       - backend
       - db
-    restart: unless-stopped
     networks:
-      - default
+      - flight-monitor-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  flight_backups:
+
+networks:
+  flight-monitor-network:
+    driver: bridge
