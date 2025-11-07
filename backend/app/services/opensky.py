@@ -2,6 +2,7 @@ import httpx
 from datetime import datetime, timedelta
 from typing import List
 from app.config import settings
+import asyncio
 
 OPENSKY_API_URL = "https://opensky-network.org/api/states/all"
 OPENSKY_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
@@ -28,7 +29,7 @@ class OpenSkyClient:
         
         print("🔑 Obtaining OAuth token from OpenSky...")
         
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 self.token_url,
                 data={
@@ -48,47 +49,56 @@ class OpenSkyClient:
             if not self.access_token:
                 raise Exception("No access_token in response")
             
-            expires_in = data.get("expires_in", 3600)
+            expires_in = data.get("expires_in", 1800)
             self.token_expires_at = datetime.now() + timedelta(seconds=expires_in - 60)
             
             print(f"✅ Token obtained (expires in {expires_in}s)")
             return self.access_token
     
     async def get_flights_over_cdmx(self) -> List[dict]:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        max_retries = 3
+        retry_delay = 5
+        
+        for attempt in range(max_retries):
             try:
-                token = await self._get_access_token()
-                
-                response = await client.get(
-                    self.api_url,
-                    params=CDMX_BBOX,
-                    headers={"Authorization": f"Bearer {token}"}
-                )
-                
-                if response.status_code == 401:
-                    print("Token expired, refreshing...")
-                    self.access_token = None
+                async with httpx.AsyncClient(timeout=30.0) as client:
                     token = await self._get_access_token()
+                    
                     response = await client.get(
                         self.api_url,
                         params=CDMX_BBOX,
                         headers={"Authorization": f"Bearer {token}"}
                     )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                states = data.get("states", [])
-                if not states:
-                    print("⚠️ No flights found over CDMX")
+                    
+                    if response.status_code == 401:
+                        print("Token expired, refreshing...")
+                        self.access_token = None
+                        continue
+                    
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    states = data.get("states", [])
+                    if not states:
+                        print("⚠️ No flights found over CDMX")
+                        return []
+                    
+                    print(f"✈️ Found {len(states)} flights over CDMX")
+                    return self._parse_states(states)
+                    
+            except (httpx.TimeoutException, httpx.RemoteProtocolError) as e:
+                print(f"⚠️ Attempt {attempt + 1}/{max_retries} failed: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    print("❌ All retries failed")
                     return []
-                
-                print(f"✈️ Found {len(states)} flights over CDMX")
-                return self._parse_states(states)
-            
             except Exception as e:
                 print(f"❌ Error fetching flights: {e}")
                 return []
+        
+        return []
     
     def _parse_states(self, states: List) -> List[dict]:
         flights = []
