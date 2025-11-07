@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSocket } from "../hooks/useSocket";
 import FlightsMap from "./FlightsMap";
+import FlightsChart from "./FlightsChart";
+import StatsPanel from "./StatsPanel";
+import FlightsList from "./FlightsList";
 
 export default function FlightsDashboard() {
   const [flights, setFlights] = useState([]);
@@ -19,43 +22,24 @@ export default function FlightsDashboard() {
   });
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">🛰️ Monitoreo de vuelos</h2>
+    <div className="h-full p-3 flex flex-col gap-3 overflow-hidden">
+      {/* Layout principal: Mapa a la izquierda, paneles a la derecha */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-3 min-h-0">
+        {/* Mapa - Ocupa 2 columnas en desktop */}
+        <div className="lg:col-span-2 min-h-0 flex flex-col">
+          <FlightsMap />
+        </div>
 
-      <div>
-        <FlightsMap />
+        {/* Paneles laterales - 1 columna en desktop */}
+        <div className="flex flex-col gap-3 min-h-0">
+          <StatsPanel stats={stats} />
+          <FlightsList flights={flights} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Panel de estadísticas */}
-        <div className="bg-gray-100 p-4 rounded-xl shadow">
-          <h3 className="text-lg font-semibold mb-2">Estadísticas</h3>
-          {stats ? (
-            <ul>
-              <li>Vuelos totales: {stats.total_flights}</li>
-              <li>Promedio velocidad: {stats.avg_speed?.toFixed(1)} km/h</li>
-              <li>Altitud media: {stats.avg_altitude?.toFixed(1)} m</li>
-            </ul>
-          ) : (
-            <p>Esperando datos...</p>
-          )}
-        </div>
-
-        {/* Lista de vuelos */}
-        <div className="bg-gray-100 p-4 rounded-xl shadow">
-          <h3 className="text-lg font-semibold mb-2">Vuelos activos</h3>
-          {flights.length > 0 ? (
-            <ul className="max-h-60 overflow-y-auto">
-              {flights.map((f, i) => (
-                <li key={i} className="border-b border-gray-300 py-1">
-                  {f.callsign || "Sin ID"} — {f.origin_country}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Esperando actualización de vuelos...</p>
-          )}
-        </div>
+      {/* Gráfico - Parte inferior */}
+      <div className="flex-shrink-0" style={{ height: '200px' }}>
+        <FlightsChart />
       </div>
     </div>
   );

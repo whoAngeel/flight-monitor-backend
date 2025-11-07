@@ -1,1 +1,53 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Estilos personalizados para Leaflet popups */
+.custom-popup .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 0;
+    padding: 0;
+}
+
+/* Mapa minimalista - ocultar atribución */
+.leaflet-control-attribution {
+    display: none !important;
+}
+
+/* Controles del mapa más minimalistas */
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-zoom a {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    color: #6b7280 !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: #f9fafb !important;
+}
+
+/* Mejoras de scrollbar para listas */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
