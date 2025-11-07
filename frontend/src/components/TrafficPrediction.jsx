@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
 export default function TrafficPrediction() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const audioRef = useRef(null);
 
   const fetchPrediction = async () => {
     setLoading(true);
@@ -11,6 +13,11 @@ export default function TrafficPrediction() {
       const apiUrl = import.meta.env.VITE_API_URL;
       const { data } = await axios.get(`${apiUrl}/api/stats/predict`);
       setData(data);
+
+      // 🔊 Reproduce automáticamente el texto
+      if (data?.prediction?.reasoning) {
+        await speakText(data.prediction.reasoning);
+      }
     } catch (error) {
       console.error("Error fetching prediction:", error);
     } finally {
@@ -18,19 +25,81 @@ export default function TrafficPrediction() {
     }
   };
 
+  const speakText = async (text) => {
+    try {
+      stopAudio(); // por si hay algo reproduciéndose
+
+      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+      const voiceId = import.meta.env.VITE_ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "xi-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_turbo_v2",
+          voice_settings: { stability: 0.5, similarity_boost: 0.8 },
+        }),
+      });
+
+      const audioData = await response.arrayBuffer();
+      const blob = new Blob([audioData], { type: "audio/mpeg" });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setSpeaking(true);
+
+      audio.play();
+      audio.onended = () => {
+        setSpeaking(false);
+        URL.revokeObjectURL(url);
+      };
+    } catch (error) {
+      console.error("Error reproduciendo el audio:", error);
+      setSpeaking(false);
+    }
+  };
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setSpeaking(false);
+    }
+  };
+
+  // Limpia el audio al desmontar
+  useEffect(() => {
+    return () => stopAudio();
+  }, []);
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold flex items-center gap-2">
           🔮 Traffic Prediction
         </h2>
-        <button
-          onClick={fetchPrediction}
-          disabled={loading}
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-        >
-          {loading ? "Predicting..." : "Predict Next Hour"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchPrediction}
+            disabled={loading}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+          >
+            {loading ? "Predicting..." : "Predict Next Hour"}
+          </button>
+
+          {speaking && (
+            <button
+              onClick={stopAudio}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              ⛔ Detener voz
+            </button>
+          )}
+        </div>
       </div>
 
       {data && (

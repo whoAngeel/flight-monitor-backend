@@ -85,7 +85,7 @@ function AnimatedMarker({ flight, markersRef }) {
             ✈️ {flight.callsign || "Sin ID"}
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <div className="grid grid-cols-2 gap-x-10 gap-y-1">
             <div className="text-gray-600">País:</div>
             <div className="font-semibold">
               {flight.origin_country || "Desconocido"}
