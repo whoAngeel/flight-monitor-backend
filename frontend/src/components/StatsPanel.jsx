@@ -10,7 +10,7 @@ export default function StatsPanel({ stats }) {
             {stats ? (
                 <div className="flex-1 space-y-2 overflow-y-auto">
                     <div className="bg-gray-50 rounded p-2">
-                        <p className="text-xs text-gray-600 mb-0.5">Vuelos totales</p>
+                        <p className="text-xs text-gray-600 mb-0.5">Vuelos totales registrados</p>
                         <p className="text-xl font-bold text-indigo-600">
                             {stats.total_flights || 0}
                         </p>

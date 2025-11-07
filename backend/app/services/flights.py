@@ -28,7 +28,8 @@ async def get_stats(db: AsyncSession) -> StatsResponse:
     total_flights = total_result.scalar()
     
     # Active flights (last 5 min)
-    cutoff = datetime.now() - timedelta(minutes=2)
+    # cutoff = datetime.now() - timedelta(minutes=2)
+    cutoff = datetime.now() - timedelta(seconds=5)
     active_result = await db.execute(
         select(func.count(Flight.id)).where(Flight.created_at >= cutoff)
     )

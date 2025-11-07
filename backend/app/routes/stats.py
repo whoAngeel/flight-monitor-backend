@@ -110,3 +110,12 @@ async def get_daily_report(db: AsyncSession = Depends(get_db)):
         "stats": daily_stats,
         "generated_at": datetime.utcnow().isoformat()
     }
+
+@router.get("/snowflake/stats")
+async def get_snowflake_stats():
+    from app.services.snowflake_backup import snowflake_service
+    stats = snowflake_service.get_archive_stats()
+    return {
+        "archive_stats": stats,
+        "status": "connected" if stats else "error"
+    }

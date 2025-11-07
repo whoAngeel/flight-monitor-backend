@@ -44,9 +44,9 @@ async def start_collector(sio):
     scheduler.add_job(
         fetch_and_store_flights,
         'interval',
-        seconds=40,
+        seconds=5,
         args=[sio],
         id='flight_collector'
     )
     scheduler.start()
-    print("Flight collector started - fetching every 40 seconds")
+    print("Flight collector started - fetching every 5 seconds")

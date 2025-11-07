@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import socketio
+from app.tasks.auto_archiver import start_auto_archiver
 
 from app.config import settings
 from app.database import engine
 from app.routes import flights, stats, zabbix
 from app.tasks.collector import start_collector
+
 
 sio = socketio.AsyncServer(
     async_mode='asgi',
@@ -18,6 +20,7 @@ sio = socketio.AsyncServer(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await start_collector(sio)
+    await start_auto_archiver(sio) 
     yield
     await engine.dispose()
 

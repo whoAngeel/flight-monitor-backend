@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     environment: str = "development"
     frontend_url: str = "http://localhost:3000"
+    snowflake_password: str 
+
     
     class Config:
         env_file = ".env"
